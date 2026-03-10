@@ -237,9 +237,15 @@ int main(int argc, char *argv[])
   }
   vector<Ship> ships = Ship::readFromFile(argv[1]);
   int start = clock();
-  for (const auto &ship : ships)
-    cout << ship.getShootingSequence() << endl;
+  for (size_t i = 0; i < ships.size(); i++)
+  {
+    cout << ships[i].getShootingSequence();
+    if (i + 1 < ships.size())
+      cout << endl;
+  }
   int end = clock();
-  cerr << "Time taken: " << ((double)(end - start)) / CLOCKS_PER_SEC << " seconds" << endl;
+  cerr << endl
+       << "Time taken: " << ((double)(end - start)) / CLOCKS_PER_SEC
+       << " seconds" << endl;
   return 0;
 }
