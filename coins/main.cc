@@ -4,6 +4,7 @@
 #include <climits>
 #include <iomanip>
 #include <algorithm>
+#include <ctime>
 
 using namespace std;
 pair<double, int> solution(vector<int> &c, int N);
@@ -11,7 +12,7 @@ int minCoins(vector<int> &coins, int amount);
 
 int main(int argc, char *argv[]) {
   // Verify input file
-  if (argc != 2) {
+  if (argc > 2) {
     cerr << "Usage: " << argv[0] << " <input file>" << endl;
     return 1;
   }
@@ -42,10 +43,14 @@ int main(int argc, char *argv[]) {
   }
 
   // Process and output results
+  int start = clock();
   for (int i = 0; i < num_cases; i++) {
     pair<double, int> result = solution(cases[i], N_values[i]);
     cout << fixed << setprecision(2) << result.first << " " << result.second << endl;
   }
+  int end = clock();
+  cout << "Time taken: " << ((double)(end - start)) / CLOCKS_PER_SEC << " seconds" << endl;
+
 
   input.close();
 
