@@ -28,7 +28,7 @@ avg max_coins
 
 ## Approach taken
 
-The approach taken consists of a simple and straightforward brute-force solution implemented using the standard libraries from C++. The implementation relies on a helper function that calculates the minimum number of coins required for a given amount, called repeatedly at each iteration.
+The approach taken consists of a graph-based optimization implemented using the standard libraries from C++. The implementation consists of a single-pass coin-change DP that, viewed as a BFS on an integer graph, computes the minimum coins needed for every amount in one sweep, avoiding redundant recalculations.
 
 ### Input reading
 The input, as declared previously, consists of a single line containing the number of test cases. The following lines consist of a single test case containing the maximum amount (in its range from 1 to the read number) in order to calculate the average and the maximum amount of coins required to pay, the number of coin denominations and then the coins.
@@ -38,10 +38,12 @@ All the test cases have been stored in a matrix. Additionally, we store in an ar
 
 ### Solution
 
-Starting off by calculating the maximum coin of the denomination set. By iterating through each amount, we set the local minimum value to infinite and an upper bound which is the maximum coin denomination plus the current amount. After that, we try all possible ways to pay that amount, calculating the minimum coins required to pay and to receive change, and updating the running minimum accordingly. After all combinations, we calculate the average (2 decimal places) and maximum number of coins exchanged.
+Starting off by computing the distance table: each integer from 0 to N + max_coin is treated as a node in a directed graph, with an edge of weight 1 from node v to node v + coin for each denomination. A single left-to-right scan fills the minimum-coins distance from node 0 to every node in O(M × K).
+
+After that, for each purchase amount X we scan all possible overpay amounts Y to find the pair (Y, Y–X) that minimizes the total coins exchanged, using direct lookups into the precomputed table. We then calculate the average (2 decimal places) and maximum number of coins exchanged.
 
 <h4> Minimum of coins </h4>
-The key of this problem is a helper function that calculates, for a given amount, the minimum number of coins required to cover it. In order to do so, we iterate through each value up to the amount and each coin denomination to check whether adding that coin leads to a better solution than what was previously found.
+The key of this problem is replacing repeated calls to a helper function with a single precomputed distance table. Each entry dist[v] is filled by checking all coin denominations: if we can already reach v – coin, we can reach v by adding one more coin. We keep the smallest result across all denominations.
 
 ---
 
