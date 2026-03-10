@@ -4,10 +4,11 @@
 #include <climits>
 #include <iomanip>
 #include <algorithm>
+#include <ctime>
 
 using namespace std;
+
 pair<double, int> solution(vector<int> &c, int N);
-int minCoins(vector<int> &coins, int amount);
 
 int main(int argc, char *argv[]) {
   // Verify input file
@@ -42,73 +43,48 @@ int main(int argc, char *argv[]) {
   }
 
   // Process and output results
+  const int start_time = clock();
   for (int i = 0; i < num_cases; i++) {
     pair<double, int> result = solution(cases[i], N_values[i]);
     cout << fixed << setprecision(2) << result.first << " " << result.second << endl;
   }
+  const int end_time = clock();
+  cerr << "Execution time: " << double(end_time - start_time) / CLOCKS_PER_SEC << " seconds" << endl;
 
   input.close();
-
-  // Write output file
-  ofstream output("coins/output.txt");
-  if (!output.is_open()) {
-    cerr << "Error: could not open output file " << argv[2] << endl;
-    return 1;
-  }
-
-  for (int i = 0; i < num_cases; i++) {
-    pair<double, int> result = solution(cases[i], N_values[i]);
-    output << fixed << setprecision(2) << result.first << " " << result.second << endl;
-  }
-
-  output.close();
 
   return 0;
 }
 
-// Helper function to compute minimum coins needed for a given amount
-int minCoins(vector<int> &coins, int amount) {
-  vector<int> aux(amount + 1, INT_MAX);
-  aux[0] = 0;
-
-  for (int i = 1; i <= amount; i++) {
-    for (int coin : coins) {
-      if (i >= coin && aux[i - coin] != INT_MAX) {
-        aux[i] = min(aux[i], aux[i - coin] + 1);
-      }
-    }
-  }
-  return aux[amount];
-}
-
 pair<double, int> solution(vector<int> &c, int N) {
-  int max_coin = *max_element(c.begin(), c.end());
-  int total_coins = 0;
+  const int max_coin = *max_element(c.begin(), c.end());
+  const int M = N + max_coin;
+
+  vector<int> dist(M + 1, INT_MAX);
+  dist[0] = 0;
+  for (int v = 1; v <= M; v++)
+    for (int coin : c)
+      if (v >= coin && dist[v - coin] != INT_MAX)
+        // If we can make (v - coin), we can make v by adding this one coin
+        dist[v] = min(dist[v], dist[v - coin] + 1);
+
+  long long total_coins = 0;
   int max_coins = 0;
-  
-  // For each amount X from 1 to N
+
+  // For each purchase amount X, find min coins over all (pay Y, receive Y-X)
   for (int X = 1; X <= N; X++) {
-    int min_total = INT_MAX;
-    
-    // Try all possible Y >= X (you pay Y, cashier gives back Y-X)
-    // Upper bound: N + max_coin to ensure we consider all optimal scenarios
-    int upper_bound = N + max_coin;
-    
-    for (int Y = X; Y <= upper_bound; Y++) {
-      int coins_paid = minCoins(c, Y);
-      int coins_received = minCoins(c, Y - X);
-      
-      if (coins_paid != INT_MAX && coins_received != INT_MAX) {
-        min_total = min(min_total, coins_paid + coins_received);
-      }
+    int best = INT_MAX;
+    for (int j = X; j <= M; j++) {
+      // j = amount paid, j-X = change received; minimize total coins exchanged
+      if (dist[j] != INT_MAX && dist[j - X] != INT_MAX)
+        best = min(best, dist[j] + dist[j - X]);
     }
-    
-    if (min_total != INT_MAX) {
-      total_coins += min_total;
-      max_coins = max(max_coins, min_total);
+    if (best != INT_MAX) {
+      total_coins += best;
+      max_coins = max(max_coins, best);
     }
   }
-  
-  double average = (double)total_coins / N;
-  return {average, max_coins};
+
+  return {(double)total_coins / N, max_coins};
 }
+
