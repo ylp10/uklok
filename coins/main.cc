@@ -43,13 +43,14 @@ int main(int argc, char *argv[]) {
   }
 
   // Process and output results
-  const int start_time = clock();
+  int start = clock();
   for (int i = 0; i < num_cases; i++) {
     pair<double, int> result = solution(cases[i], N_values[i]);
     cout << fixed << setprecision(2) << result.first << " " << result.second << endl;
   }
-  const int end_time = clock();
-  cerr << "Execution time: " << double(end_time - start_time) / CLOCKS_PER_SEC << " seconds" << endl;
+  int end = clock();
+  cout << "Time taken: " << ((double)(end - start)) / CLOCKS_PER_SEC << " seconds" << endl;
+
 
   input.close();
 

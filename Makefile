@@ -1,12 +1,7 @@
 all:
-	clang++ -o coins/coins coins/main.cc
-	clang++ -o alien/alien alien/main.cc
+	clang++ -o coins/coins coins/main.cc -std=c++17
+	clang++ -o alien/alien alien/main.cc -std=c++17 
 
-alien/alien: alien/main.cc
-	clang++ -o alien/alien alien/main.cc
-
-.PHONY: alien
-alien: alien/alien
 
 clean:
 	rm -f coins/coins alien/alien
