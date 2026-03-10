@@ -12,7 +12,7 @@ int minCoins(vector<int> &coins, int amount);
 
 int main(int argc, char *argv[]) {
   // Verify input file
-  if (argc > 2) {
+  if (argc != 2) {
     cerr << "Usage: " << argv[0] << " <input file>" << endl;
     return 1;
   }
