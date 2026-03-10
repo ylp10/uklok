@@ -32,6 +32,27 @@ private:
            a.minCol <= b.maxCol && b.minCol <= a.maxCol;
   }
 
+  // More visible in overlap = in front (closer to viewer)
+  bool aIsInFrontOfB(char aLetter, char bLetter, const Component &a,
+                     const Component &b) const
+  {
+    int rLo = max(a.minRow, b.minRow), rHi = min(a.maxRow, b.maxRow);
+    int cLo = max(a.minCol, b.minCol), cHi = min(a.maxCol, b.maxCol);
+    int aCount = 0, bCount = 0;
+    for (int r = rLo; r <= rHi; r++)
+      for (int c = cLo; c <= cHi; c++)
+      {
+        char ch = grid[r][c];
+        if (ch == aLetter)
+          aCount++;
+        if (ch == bLetter)
+          bCount++;
+      }
+    if (aCount != bCount)
+      return aCount > bCount;
+    return aLetter < bLetter;
+  }
+
 public:
   Ship() : scale(0) {}
 
@@ -95,34 +116,71 @@ public:
         comp.maxCol = max(comp.maxCol, c);
       }
 
-    // Compute areas and centroid from bounding box center
+    // Compute size and center
     for (auto &[ch, comp] : compMap)
     {
       comp.cell_area = comp.cell_count * scale * scale;
-      comp.bounding_box_area = (comp.maxRow - comp.minRow + 1) * (comp.maxCol - comp.minCol + 1);
+      comp.bounding_box_area =
+          (comp.maxRow - comp.minRow + 1) * (comp.maxCol - comp.minCol + 1);
       comp.px = (comp.minRow + comp.maxRow + 1) / 2.0 * scale;
       comp.py = (comp.minCol + comp.maxCol + 1) / 2.0 * scale;
     }
 
-    // Assign each letter a depth layer
+    // For each overlapping pair: who is in front? (visible more in overlap)
+    map<char, set<char>> pred;
+    for (const auto &[chA, compA] : compMap)
+      for (const auto &[chB, compB] : compMap)
+      {
+        if (chA == chB)
+          continue;
+        if (!boxOverlaps(compA, compB))
+          continue;
+        if (aIsInFrontOfB(chA, chB, compA, compB))
+          pred[chB].insert(chA);
+        else
+          pred[chA].insert(chB);
+      }
+
+    // Assign layer: each component is behind all that are in front of it
     vector<Component *> order;
     for (auto &[ch, comp] : compMap)
       order.push_back(&comp);
-    sort(order.begin(), order.end(), [](const Component *a, const Component *b)
-         { return a->bounding_box_area != b->bounding_box_area ? a->bounding_box_area < b->bounding_box_area : a->letter < b->letter; });
-    for (Component *comp : order)
+    sort(order.begin(), order.end(),
+         [](const Component *a, const Component *b)
+         {
+           return a->bounding_box_area != b->bounding_box_area
+                      ? a->bounding_box_area < b->bounding_box_area
+                      : a->letter < b->letter;
+         });
+    int assigned = 0;
+    while (assigned < (int)order.size())
     {
-      set<int> used;
-      for (auto &[ch, other] : compMap)
-        if (other.depth > 0 && boxOverlaps(*comp, other))
-          used.insert(other.depth);
-      int d = 1;
-      while (used.count(d))
-        d++;
-      comp->depth = d;
+      for (Component *comp : order)
+      {
+        if (comp->depth > 0)
+          continue;
+        int d = 1;
+        bool ready = true;
+        for (char p : pred[comp->letter])
+        {
+          int pd = compMap.at(p).depth;
+          if (pd == 0)
+          {
+            ready = false;
+            break;
+          }
+          if (pd >= d)
+            d = pd + 1;
+        }
+        if (ready)
+        {
+          comp->depth = d;
+          assigned++;
+        }
+      }
     }
 
-    // Group by depth, sort within depth by (cell_area ASC, letter ASC), format
+    // Group by layer, sort by size then letter, format output
     map<int, vector<const Component *>> byDepth;
     for (const auto &[ch, comp] : compMap)
       byDepth[comp.depth].push_back(&comp);
@@ -131,8 +189,13 @@ public:
     bool firstDepth = true;
     for (auto &[depth, comps] : byDepth)
     {
-      sort(comps.begin(), comps.end(), [](const Component *a, const Component *b)
-           { return a->cell_area != b->cell_area ? a->cell_area < b->cell_area : a->letter < b->letter; });
+      sort(comps.begin(), comps.end(),
+           [](const Component *a, const Component *b)
+           {
+             return a->bounding_box_area != b->bounding_box_area
+                        ? a->bounding_box_area < b->bounding_box_area
+                        : a->letter < b->letter;
+           });
       if (!firstDepth)
         out << " ";
       firstDepth = false;
