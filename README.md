@@ -77,19 +77,24 @@ X Y Z
 
 ## Approach taken
 
-The approach taken consists of a bounding-box overlap graph coloring implemented using the standard libraries from C++. The implementation groups all cells sharing the same letter into a single component regardless of connectivity, then assigns depth layers using a greedy algorithm on the resulting overlap graph.
+The approach uses a visibility-based depth assignment. Each letter is a component (command center). Components are grouped by letter, bounds and size are computed, then layers are assigned by comparing which component is visible more often in the overlap region.
 
 ### Input reading
 The input consists of a single line with the number of ships. Each ship starts with its grid dimensions X and Y and a scale factor Z, followed by X rows of Y whitespace-separated characters. Any character outside `[a-zA-Z]` is treated as empty space.
 
 <h4> Storage </h4>
-Each ship stores its character grid and its scale factor. Components are derived on demand when the shooting sequence is requested, so no extra per-cell storage is needed beyond the grid itself.
+Each ship stores its character grid and its scale factor. Components are derived on demand when the shooting sequence is requested.
 
 ### Solution
 
-For each ship, all cells are scanned once to build a bounding box per distinct letter: the smallest rectangle enclosing all occurrences of that letter. The centroid of each component is the center of its bounding box scaled by Z, and its area is the cell count multiplied by Z².
+For each ship, all cells are scanned once to build a bounding box per distinct letter. The centroid is the center of the bounding box scaled by Z. The grid shows which component is visible at each cell — we use this to decide stacking order.
 
-Depth layers are then assigned greedily. Components are processed in ascending order of bounding box area (alphabetical tiebreak). Each component receives the smallest depth not already taken by any overlapping component. Two components overlap if their bounding boxes intersect. Finally, components are grouped by depth, sorted within each group by area then letter, and formatted into the output string.
+For each overlapping pair of components, we count how often each appears in the overlap region. The one visible more often is "in front" (closer to the viewer). We assign depth so each component is behind all that are in front of it, processing in rounds until all depths are set. Components are sorted by bounding box size (smallest first) for processing order. Within each layer, components are sorted by size then letter.
 
 <h4> Depth layering </h4>
-The key of this problem is treating bounding box overlaps as a graph coloring problem. Each letter is a node; two nodes share an edge if their bounding boxes overlap. Greedy coloring on this graph, with nodes ordered by bounding box size, assigns the minimum number of depth layers needed to separate all conflicting components.
+The key is using the grid to infer stacking: the component shown at a cell is in front at that position. For overlapping pairs, we compare visibility counts in the overlap rectangle to determine who is in front. Depths are then assigned so each component is behind all components that are in front of it.
+
+<h4> Optimizations </h4>
+- Each overlapping pair is checked once (skip when chA ≥ chB)
+- Reserve capacity for the component order vector
+- Move semantics when storing ships to avoid copying grids
