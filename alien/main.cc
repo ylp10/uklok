@@ -1,11 +1,11 @@
-#include <iostream>
-#include <vector>
+#include <algorithm>
 #include <fstream>
 #include <iomanip>
-#include <algorithm>
+#include <iostream>
 #include <map>
 #include <set>
 #include <sstream>
+#include <vector>
 
 using namespace std;
 
@@ -16,10 +16,10 @@ private:
   {
     char letter;
     int cell_count = 0;
-    double cell_area;      // cell_count * Z^2, for within-depth sort
-    int bounding_box_area; //  w*h, for depth processing order
+    double cell_area;
+    int bounding_box_area;
     int minRow, maxRow, minCol, maxCol;
-    double px, py; // center of bounding box * Z
+    double px, py; // center coordinates (scaled)
     int depth = 0;
   };
 
@@ -98,7 +98,7 @@ public:
   {
     int rows = grid.size(), cols = grid[0].size();
 
-    // Group all cells by letter, build bounding boxes
+    // Group cells by letter, compute bounds
     map<char, Component> compMap;
     for (int r = 0; r < rows; r++)
       for (int c = 0; c < cols; c++)
@@ -215,14 +215,16 @@ private:
   {
     if (value < min || value > max)
     {
-      cerr << "Value " << ch << " = " << value << " out of bounds [" << min << "," << max << "]" << endl;
+      cerr << "Value " << ch << " = " << value << " out of bounds [" << min
+           << "," << max << "]" << endl;
       exit(1);
     }
   }
 
   static void assert_regex(char ch, char &to_store_in)
   {
-    to_store_in = ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')) ? ch : ' ';
+    to_store_in =
+        ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')) ? ch : ' ';
   }
 };
 
