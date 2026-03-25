@@ -1,10 +1,10 @@
+#include <algorithm>
+#include <climits>
+#include <ctime>
+#include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <vector>
-#include <fstream>
-#include <climits>
-#include <iomanip>
-#include <algorithm>
-#include <ctime>
 
 using namespace std;
 
@@ -46,11 +46,13 @@ int main(int argc, char *argv[]) {
   int start = clock();
   for (int i = 0; i < num_cases; i++) {
     pair<double, int> result = solution(cases[i], N_values[i]);
-    cout << fixed << setprecision(2) << result.first << " " << result.second << endl;
+    cout << fixed << setprecision(2) << result.first << " " << result.second
+         << endl;
   }
   int end = clock();
-  cout << "Time taken: " << ((double)(end - start)) / CLOCKS_PER_SEC << " seconds" << endl;
-
+  cout << fixed << setprecision(4)
+       << "Time taken: " << ((double)(end - start)) / CLOCKS_PER_SEC
+       << " seconds" << endl;
 
   input.close();
 
@@ -88,4 +90,3 @@ pair<double, int> solution(vector<int> &c, int N) {
 
   return {(double)total_coins / N, max_coins};
 }
-
